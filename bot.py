@@ -1,16 +1,4 @@
-FULL TELEGRAM AUTO ANIME BANNER MAKER BOT
 
-Language: Python
-
-Library: Pyrogram + Pillow + OpenCV
-
-NOTE: This is a COMPLETE working base you can extend
-
-===================== INSTALL REQUIREMENTS =====================
-
-pip install pyrogram tgcrypto pillow opencv-python requests
-
-===================== CONFIGURATION =====================
 
 import os
 import json
