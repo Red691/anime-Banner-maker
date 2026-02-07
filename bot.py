@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-# ===================== ENV BASED CONFIG (HEROKU READY) =====================
+# ===================== ENV CONFIG (HEROKU READY) =====================
 
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
@@ -16,11 +16,9 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 # ===================== PATHS =====================
 
 BASE_DIR = "data"
-TEMPLATE_DIR = "templates"
 FONT_DIR = "fonts"
 
 os.makedirs(BASE_DIR, exist_ok=True)
-os.makedirs(TEMPLATE_DIR, exist_ok=True)
 os.makedirs(FONT_DIR, exist_ok=True)
 
 USERS_FILE = f"{BASE_DIR}/users.json"
@@ -54,36 +52,58 @@ bot = Client(
 # ===================== HELPERS =====================
 
 def anime_search(name):
-    url = f"https://api.jikan.moe/v4/anime?q={name}&limit=1"
-    r = requests.get(url).json()
-    if not r.get("data"):
+    try:
+        url = f"https://api.jikan.moe/v4/anime?q={name}&limit=1"
+        r = requests.get(url, timeout=10).json()
+        if not r.get("data"):
+            return None
+        return r["data"][0]
+    except Exception:
         return None
-    return r["data"][0]
 
 # ===================== BANNER GENERATOR =====================
 
 def create_banner(anime):
-    poster_url = anime["images"]["jpg"]["large_image_url"]
-    poster = Image.open(requests.get(poster_url, stream=True).raw).resize((1280, 720))
+    # -------- Poster (safe) --------
+    try:
+        poster_url = anime["images"]["jpg"]["large_image_url"]
+        poster = Image.open(
+            requests.get(poster_url, stream=True, timeout=10).raw
+        ).resize((1280, 720))
+    except Exception:
+        poster = Image.new("RGB", (1280, 720), "black")
 
+    # -------- Blur --------
     img = np.array(poster)
     img = cv2.GaussianBlur(img, (15, 15), 0)
     bg = Image.fromarray(img)
 
     draw = ImageDraw.Draw(bg)
 
-    font_title = ImageFont.truetype(f"{FONT_DIR}/default.ttf", 60)
-    font_desc = ImageFont.truetype(f"{FONT_DIR}/default.ttf", 28)
+    # -------- Font (safe) --------
+    try:
+        font_title = ImageFont.truetype(f"{FONT_DIR}/default.ttf", 60)
+        font_desc = ImageFont.truetype(f"{FONT_DIR}/default.ttf", 28)
+    except Exception:
+        font_title = ImageFont.load_default()
+        font_desc = ImageFont.load_default()
 
-    title = anime["title"]
-    desc = (anime["synopsis"] or "")[:300] + "..."
-    genres = ", ".join([g["name"] for g in anime["genres"]])
+    # -------- Text (safe) --------
+    title = anime.get("title", "Unknown Anime")
+    synopsis = anime.get("synopsis") or "No description available."
+    desc = synopsis[:300] + "..."
+    genres = ", ".join([g["name"] for g in anime.get("genres", [])]) or "Unknown"
 
     draw.text((60, 80), title, fill="white", font=font_title)
     draw.text((60, 160), genres, fill="orange", font=font_desc)
     draw.text((60, 220), desc, fill="white", font=font_desc)
 
-    watermark = json.load(open(SETTINGS_FILE))["watermark"]
+    # -------- Watermark --------
+    try:
+        watermark = json.load(open(SETTINGS_FILE)).get("watermark", "")
+    except Exception:
+        watermark = ""
+
     draw.text((900, 660), watermark, fill="white", font=font_desc)
 
     output = "banner.jpg"
@@ -106,7 +126,7 @@ def generate(_, m: Message):
     banner = create_banner(anime)
     m.reply_photo(
         banner,
-        caption=f"✅ Banner created for **{anime['title']}**"
+        caption=f"✅ Banner created for **{anime.get('title','Anime')}**"
     )
 
 # ===================== RUN =====================
