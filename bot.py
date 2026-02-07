@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-===================== ENV BASED CONFIG (HEROKU READY) =====================
+#===================== ENV BASED CONFIG (HEROKU READY) =====================
 
 API_ID = int(os.environ.get("API_ID")) API_HASH = os.environ.get("API_HASH") BOT_TOKEN = os.environ.get("BOT_TOKEN") # <-- your bot token
 
@@ -23,17 +23,17 @@ if not os.path.exists(USERS_FILE): json.dump({"authorized": []}, open(USERS_FILE
 
 if not os.path.exists(SETTINGS_FILE): json.dump({ "watermark": "@Anime_Sensei_Official", "blur": 7, "text_color": "white", "font": "default.ttf" }, open(SETTINGS_FILE, "w"))
 
-===================== BOT =====================
+#===================== BOT =====================
 
 bot = Client("anime_banner_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-===================== HELPERS =====================
+#===================== HELPERS =====================
 
 def is_authorized(user_id): users = json.load(open(USERS_FILE)) return user_id in users["authorized"]
 
 def anime_search(name): url = f"https://api.jikan.moe/v4/anime?q={name}&limit=1" r = requests.get(url).json() if not r.get("data"): return None return r["data"][0]
 
-===================== BANNER GENERATOR =====================
+#===================== BANNER GENERATOR =====================
 
 def create_banner(anime): bg = Image.new("RGB", (1280, 720), "black")
 
@@ -63,7 +63,7 @@ output = "banner.jpg"
 bg.save(output)
 return output
 
-===================== COMMANDS =====================
+#===================== COMMANDS =====================
 
 @bot.on_message(filters.command("start")) def start(_, m: Message): m.reply("🎨 Anime Banner Maker Bot\n\nSend anime name to create banner")
 
@@ -72,6 +72,6 @@ return output
 banner = create_banner(anime)
 m.reply_photo(banner, caption=f"✅ Banner created for **{anime['title']}**")
 
-===================== RUN =====================
+#===================== RUN =====================
 
 bot.run()
