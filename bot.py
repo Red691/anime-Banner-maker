@@ -96,7 +96,7 @@ def create_banner(anime):
 def start(_, m: Message):
     m.reply("🎨 Anime Banner Maker Bot\n\nSend anime name to create banner")
 
-@bot.on_message(filters.text & ~filters.command)
+@bot.on_message(filters.text & ~filters.regex(r"^/"))
 def generate(_, m: Message):
     anime = anime_search(m.text)
     if not anime:
